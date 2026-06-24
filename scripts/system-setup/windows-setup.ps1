@@ -1,4 +1,5 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     Provision a new Windows system for IT/sysadmin work.
@@ -34,23 +35,24 @@ param (
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-function Write-Step   { param([string]$Msg) Write-Host "[STEP]  $Msg" -ForegroundColor Cyan }
-function Write-Info   { param([string]$Msg) Write-Host "[INFO]  $Msg" -ForegroundColor Green }
-function Write-Warn   { param([string]$Msg) Write-Host "[WARN]  $Msg" -ForegroundColor Yellow }
-function Write-Fail   { param([string]$Msg) Write-Host "[ERROR] $Msg" -ForegroundColor Red }
+function Write-Step { param([string]$Msg) Write-Information "[STEP]  $Msg" }
+function Write-Info { param([string]$Msg) Write-Information "[INFO]  $Msg" }
+function Write-Warn { param([string]$Msg) Write-Warning "[WARN]  $Msg" }
+function Write-Fail { param([string]$Msg) Write-Error "[ERROR] $Msg" }
 
 # ── Confirmation ──────────────────────────────────────────────────────────────
 if (-not $SkipConfirm) {
-    Write-Host ""
-    Write-Host "This script will:"
-    Write-Host "  1. Display system information"
-    Write-Host "  2. Create IT tools directory structure"
+    Write-Information ""
+    Write-Information "This script will:"
+    Write-Information "  1. Display system information"
+    Write-Information "  2. Create IT tools directory structure"
     if ($InstallTools) {
-        Write-Host "  3. Install Chocolatey and common IT packages"
+        Write-Information "  3. Install Chocolatey and common IT packages"
     }
-    Write-Host ""
+    Write-Information ""
     $answer = Read-Host "Continue? [y/N]"
     if ($answer -notmatch '^[Yy]$') {
         Write-Info "Aborted."
@@ -105,7 +107,7 @@ if ($InstallTools) {
         try {
             [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
             $chocoScript = (New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')
-            Invoke-Expression $chocoScript
+            & ([scriptblock]::Create($chocoScript))
         } catch {
             Write-Fail "Failed to install Chocolatey: $_"
         }
@@ -126,11 +128,11 @@ if ($InstallTools) {
 }
 
 # ── 5. Summary ────────────────────────────────────────────────────────────────
-Write-Host ""
+Write-Information ""
 Write-Info "=== Windows setup complete ==="
 Write-Info "IT tools directory: $ItBase"
-Write-Host ""
-Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  - Run .\scripts\Automation\backup-script.ps1 to configure backups"
-Write-Host "  - Review config-templates\ and copy relevant configs"
-Write-Host "  - Run a security scan with Windows Defender or your EDR"
+Write-Information ""
+Write-Information "Next steps:"
+Write-Information "  - Run .\scripts\Automation\backup-script.ps1 to configure backups"
+Write-Information "  - Review config-templates\ and copy relevant configs"
+Write-Information "  - Run a security scan with Windows Defender or your EDR"

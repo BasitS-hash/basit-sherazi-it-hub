@@ -1,3 +1,4 @@
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Robocopy-based timestamped backup for Windows systems.
@@ -43,11 +44,12 @@ param (
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-function Write-Info { param([string]$Msg) Write-Host "[INFO]  $Msg" -ForegroundColor Green }
-function Write-Warn { param([string]$Msg) Write-Host "[WARN]  $Msg" -ForegroundColor Yellow }
-function Write-Fail { param([string]$Msg) Write-Host "[ERROR] $Msg" -ForegroundColor Red }
+function Write-Info { param([string]$Msg) Write-Information "[INFO]  $Msg" }
+function Write-Warn { param([string]$Msg) Write-Warning "[WARN]  $Msg" }
+function Write-Fail { param([string]$Msg) Write-Error "[ERROR] $Msg" }
 
 # ── Build destination ─────────────────────────────────────────────────────────
 $timestamp    = Get-Date -Format 'yyyyMMdd_HHmmss'
@@ -55,12 +57,12 @@ $backupFolder = Join-Path $BackupPath "backup_$timestamp"
 $logFile      = Join-Path $BackupPath "backup_${timestamp}.log"
 
 # ── Confirmation ──────────────────────────────────────────────────────────────
-Write-Host ""
+Write-Information ""
 Write-Info "=== Windows Backup Utility ==="
 Write-Info "Source      : $SourcePath"
 Write-Info "Destination : $backupFolder"
 if ($DryRun) { Write-Warn "DRY RUN — no files will be copied." }
-Write-Host ""
+Write-Information ""
 
 if (-not $SkipConfirm -and -not $DryRun) {
     $answer = Read-Host "Start backup? [y/N]"
@@ -113,7 +115,7 @@ Robocopy log     : $logFile
 "@ | Set-Content -Path $metaFile -Encoding UTF8
 }
 
-Write-Host ""
+Write-Information ""
 Write-Info "=== Backup complete ==="
 Write-Info "Snapshot : $backupFolder"
 Write-Info "Log file : $logFile"
