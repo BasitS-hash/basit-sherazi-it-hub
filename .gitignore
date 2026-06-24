@@ -1,21 +1,37 @@
-# System files
-Thumbs.db
+# ── OS artifacts ──────────────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
+Desktop.ini
 
-# Log files
+# ── Log files ─────────────────────────────────────────────────────────────────
 *.log
 logs/
 
-# Backup files
-*.bak
-*.backup
+# ── Backup staging (local only — committed examples live under backups/) ───────
+backups/backup_*/
+!backups/backup_*/backup_info.txt
 
-# Sensitive data
-*.env
+# ── Sensitive / secrets ───────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
 *.key
 *.pem
+*.p12
+*.pfx
 secrets/
+credentials/
 
-# Temporary files
+# ── Editor / IDE ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Temporary files ───────────────────────────────────────────────────────────
 tmp/
 temp/
+*.bak
+*.backup
+*.tmp
