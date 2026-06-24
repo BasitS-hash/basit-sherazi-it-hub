@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  # ── ShellCheck — lint all bash scripts ─────────────────────────────────────
+  shellcheck:
+    name: ShellCheck (Bash)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck
+        run: |
+          find . -name "*.sh" \
+            -not -path "./.git/*" \
+            -print0 \
+          | xargs -0 shellcheck \
+              --severity=warning \
+              --shell=bash \
+              --external-sources
+
+  # ── PSScriptAnalyzer — lint all PowerShell scripts ────────────────────────
+  psscriptanalyzer:
+    name: PSScriptAnalyzer (PowerShell)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $results = Get-ChildItem -Recurse -Filter "*.ps1" |
+            Where-Object { $_.FullName -notmatch '\.git' } |
+            ForEach-Object {
+              Invoke-ScriptAnalyzer -Path $_.FullName -Severity @('Error','Warning')
+            }
+          if ($results) {
+            $results | Format-Table -AutoSize
+            exit 1
+          }
+          Write-Host "PSScriptAnalyzer: no issues found."
+
+  # ── gitleaks — scan for committed secrets ─────────────────────────────────
+  gitleaks:
+    name: Gitleaks (Secret Scan)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # full history needed for full scan
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Validate YAML files ────────────────────────────────────────────────────
+  yaml-lint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Run yamllint
+        run: |
+          yamllint -d '{extends: default, rules: {line-length: {max: 120}}}' \
+            .github/workflows/
